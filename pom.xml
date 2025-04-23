@@ -1,0 +1,26 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>lucene-adapter-indexing</artifactId>
+	<version>0.0.3</version>
+	<name>lucene-adapter-indexing</name>
+	<description>Provides utilities to let adapters define entities and have that entities indexed as documents into a Lucene.</description>
+	<parent>
+		<groupId>org.codeturnery</groupId>
+		<artifactId>common-java-project-pom</artifactId>
+		<version>1.0.4</version>
+	</parent>
+	<dependencies>
+		<dependency>
+			<groupId>org.codeturnery</groupId>
+			<artifactId>lucene-toolbox</artifactId>
+			<version>0.4.5</version>
+		</dependency>
+
+		<!-- From XSD generated Java classes to configure a Lucene index -->
+		<dependency>
+			<groupId>org.codeturnery</groupId>
+			<artifactId>lucene-index-config</artifactId>
+			<version>0.0.8-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
+</project>

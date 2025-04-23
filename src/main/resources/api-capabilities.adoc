@@ -1,0 +1,78 @@
+== How to handle `InputStream` fields
+
+The attempt to utilize input streams is problematic. The idea was to
+allow efficient transfer when the source provides an input stream and the
+destination desires an output stream. This way there would have been no need
+to copy all bytes into an intermediate array.
+
+However when the source
+provides an input stream (and does not know what the destination needs) and
+the destination needs to access the bytes multiple times (e.g. as byte arrays
+for different fields), then the source would need to open the input stream
+multiple times and the destination would read the bytes multiple times, even
+though the byte array created from the first read could be re-used.
+ 
+A solution is not yet clear, but if this whole approach is for Lucene only,
+then there probably is no need for input stream returning methods anyway.
+
+== Question: everything in this sender/fields/handle approach, or other accesses?
+ 
+Having a single API that provides everything the adapter has to offer sounds convenient.
+An adapter would provide one or multiple entities defined in the adapter with corresponding sets of fields.
+
+The ideal minimum would be:
+
+* Receiving a stream of entity handles from the adapter, to which parallel processing and filters can be applied easily
+* Accessing entity handles directly via their ID in the corresponding adapter
+
+Within the application, adapter entity fields would be bound to any functionality desired.
+I.e. the adapter does not need to care about current or future functionalities in the application.
+This is a big advantage, as this way adapters can be used for functionalities developed long after the release of the adapter.
+
+In practice this approach may have a variety of hard to foresee problems in the future.
+
+The potential performance waste of `InputStream` fields has already been explained above and shows, that such problems may only become apparent in a specific use-case scenario.
+
+Another general problem may be that adapters do not expose enough internal information for the application to make a decision regarding the access.
+I.e. the data the adapters have access to is in no way uniform over multiple adapters.
+To 
+
+
+== Fuck
+
+The `InputStream` problem is just the most prominent example.
+The general problem with the sender and fields approach arises from two factors:
+
+=== 1. no caching
+
+Caching becomes only possible if it can be invalidated.
+This may be possible with a `release()` method on the handle, but it adds to the complexity caching would already introduce by itself
+
+=== 2. multiple accesses to the same field in the same entity
+
+When the application accesses the same field multiple times, the adapter can't predict the accesses after the first one and thus can't handle resources ideally.
+
+E.g. the application may request an image from the adapter as an `InputStream`.
+The adapter chooses to send a request to an image server and receives the response.
+As the body may be very large and the application requested an `InputStream` anyway, the adapter just passes the body `InputStream` to the application.
+If the field is accessed only one time, this can be very well the right decision.
+
+However, if the application accesses the field a second time, the process becomes much more wasteful than if the data was cached before passing it along to the application.
+
+== Solution
+
+In theory there is no need for the application to access a field multiple times, it can just store the result by itself.
+
+In practice, this is even already possible regarding the Lucene indexing, by passing an entity field into a field factory method that reads the data and creates not one but multiple document fields.
+
+== Differentiation
+
+Entities and their fields/accessors may not be enough as API.
+E.g. when indexing data an adapter may know all handles and provide them in a stream, but there is a difference between having all backing data already stored on disk and having to fetch or even crawl it from a third-party server.
+
+There seem to be two general approaches:
+
+1. leave the details to the adapter and just mark fields with the information where the data resides (e.g. an enum) so that the application can decide when to use it
+2. implement a separate adapter API that allows to start crawls
+
+
